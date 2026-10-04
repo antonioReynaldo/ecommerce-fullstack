@@ -1,0 +1,22 @@
+{
+  "singleQuote": true,
+  "semi": true,
+  "tabWidth": 2,
+  "trailingComma": "none",
+  "printWidth": 150,
+  "arrowParens": "always",
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "printWidth": 150
+      }
+    },
+    {
+      "files": "*.css",
+      "options": {
+        "singleQuote": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(20)
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  roleId       Int       @map("role_id")
+  name         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String? @map("password_hash") @db.VarChar(255)
+  authProvider String @default("local") @map("auth_provider") @db.VarChar(20)
+  googleId     String? @unique @map("google_id")
+  photoUrl     String? @map("photo_url")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  role          Role           @relation(fields: [roleId], references: [id])
+  refreshTokens RefreshToken[]
+  employee      Employee?
+  customer      Customer?
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model Employee {
+  id           Int @id @default(autoincrement())
+  userId       Int @unique @map("user_id")
+  positionId   Int @map("position_id")
+  salary       Decimal @db.Decimal(10,2)
+  isActive     Boolean @default(true) @map("is_active")
+  documentId   String   @unique @map("document_id") @db.VarChar(8)
+  phone        String?   @map("phone") @db.VarChar(20)
+  hireAt       DateTime @default(now()) @map("hire_at") @db.Timestamptz(3)
+  terminatedAt DateTime? @map("terminated_at") @db.Timestamptz(3)     
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user         User     @relation(fields: [userId], references: [id])
+  position     Position @relation(fields: [positionId], references: [id])
+
+  @@index([positionId])
+  @@index([isActive])
+  @@map("employees")
+}
+
+model Position {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(50)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  employees Employee[]
+
+  @@map("positions")
+}
+
+model Customer {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique @map("user_id")
+  phone        String?  @db.VarChar(20)
+  documentType String?  @map("document_type") @db.VarChar(10)
+  documentId   String?  @unique @map("document_id") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user     User      @relation(fields: [userId], references: [id])
+  addresses Address[]
+
+  @@map("customers")
+}
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  label      String?  @db.VarChar(50)
+  street     String   @db.VarChar(255)
+  reference  String?  @db.VarChar(255)
+  districtId Int      @map("district_id")
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  district District @relation(fields: [districtId], references: [id])
+
+  @@index([customerId])
+  @@map("addresses")
+}
+
+model Department {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(100)
+  ubigeoCode String    @unique @map("ubigeo_code") @db.VarChar(2)
+
+  provinces Province[]
+
+  @@map("departments")
+}
+
+model Province {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(100)
+  ubigeoCode   String     @unique @map("ubigeo_code") @db.VarChar(4)
+  departmentId Int        @map("department_id")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  districts  District[]
+
+  @@index([departmentId])
+  @@map("provinces")
+}
+
+model District {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  ubigeoCode String   @unique @map("ubigeo_code") @db.VarChar(6)
+  provinceId Int      @map("province_id")
+
+  province  Province  @relation(fields: [provinceId], references: [id])
+  
+  addresses Address[]
+
+  @@index([provinceId])
+  @@map("districts")
+}
+
+model RefreshToken {
+  id        Int    @id @default(autoincrement())
+  userId    Int    @map("user_id")
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  imageUrl    String?  @db.Text @map("image_url")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  parentId Int? @map("parent_id")
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryHierarchy")
+
+  products Product[]
+  attributes CategoryAttribute[]
+
+  @@unique([parentId, name])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int      @map("category_id")
+  name        String   @db.VarChar(150)
+  description String?  @db.Text
+  sku         String   @unique @db.VarChar(50)
+  barcode     String?  @unique @db.VarChar(50)
+  price       Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  category Category @relation(fields: [categoryId], references: [id])
+
+  attributeValues ProductAttributeValue[]
+
+  images ProductImage[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int      @map("product_id")
+  url       String   @db.Text
+  storagePath String   @map("storage_path") @db.Text
+  alt       String?  @db.VarChar(150)
+  position  Int      @default(0)
+  isPrimary Boolean  @default(false) @map("is_primary")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model CategoryAttribute {
+  id       Int           @id @default(autoincrement())
+  name     String        @db.VarChar(100)
+  key      String        @db.VarChar(100)
+  type     AttributeType
+  required Boolean       @default(false)
+  options  String[]      @default([]) 
+
+  categoryId Int      @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  values ProductAttributeValue[]
+
+  @@unique([categoryId, key])
+  @@map("category_attributes")
+}
+
+model ProductAttributeValue {
+  id                  Int    @id @default(autoincrement())
+  value               String @db.Text
+  productId           Int @map("product_id")
+  categoryAttributeId Int @map("category_attribute_id")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryAttribute CategoryAttribute @relation(fields: [categoryAttributeId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryAttributeId])
+  @@index([categoryAttributeId])
+  @@map("product_attribute_values")
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  SELECT
+}

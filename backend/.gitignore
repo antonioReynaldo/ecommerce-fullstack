@@ -1,0 +1,10 @@
+node_modules
+dist
+
+# Variables de entorno (nunca subir)
+.env
+.env.*
+!.env.example
+
+# Cliente de Prisma generado (se crea con prisma generate)
+src/generated/prisma

@@ -1,4 +1,4 @@
-import { createProductSchema } from './products.schema.js';
+import { createProductSchema, productQuerySchema } from './products.schema.js';
 import type { Request, Response } from 'express';
 import { productsService } from './products.service.js';
 
@@ -14,12 +14,26 @@ export const createProductController = async (req: Request, res: Response) => {
   });
 };
 
-export const getAllProducts = async (_req: Request, res: Response) => {
-  const allProductos = await productsService.getAllProducts();
+export const getAllProducts = async (req: Request, res: Response) => {
+  const query = productQuerySchema.parse(req.query);
+
+  const response = await productsService.getAllProducts(query);
 
   return res.status(200).json({
     success: true,
     message: 'Todos los productos obtenidos',
-    data: allProductos
+    response
+  });
+};
+
+export const getAllActiveProductsController = async (req: Request, res: Response) => {
+  const query = productQuerySchema.parse(req.query);
+
+  const productsVisible = await productsService.getAllActiveProducts(query);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Productos activos obtenidos',
+    data: productsVisible
   });
 };

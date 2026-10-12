@@ -36,7 +36,7 @@ export type CreateProductType = z.infer<typeof createProductSchema>;
 export const updateProductSchema = createProductSchema
   .pick({ name: true, description: true, barcode: true, price: true, stock: true, isActive: true })
   .partial()
-  .extend({ stock: z.coerce.number().int().min(0), isActive: z.boolean().optional() });
+  .extend({ stock: z.coerce.number().int().min(0).optional(), isActive: z.boolean().optional() });
 
 export type UpdateProductType = z.infer<typeof updateProductSchema>;
 
@@ -52,7 +52,37 @@ export const productQuerySchema = z.object({
     .int('El limit debe ser un número entero')
     .min(1, 'La query limit debe ser mínimo 1')
     .max(100, 'El limit debe ser como maximo 100')
-    .default(20)
+    .default(20),
+
+  search: z.string().trim().optional(),
+
+  categoryId: z.coerce
+    .number('La query categoryId debe ser de un número')
+    .int('La query categoryId debe ser un número entero')
+    .positive('La query categoryId debe ser un número positivo')
+    .optional(),
+
+  isActive: z.stringbool('El query isActive debe tener un valor booleano').optional(),
+
+  minPrice: z.coerce.number('minPrice debe ser un número').min(0, 'minPrice no puede ser engativo').optional(),
+
+  maxPrice: z.coerce.number('maxPrice debe ser un número').min(0, 'maxPrice no puede ser engativo').optional(),
+
+  minStock: z.coerce
+    .number('minStock debe ser un número')
+    .int('minStock debe ser un número entero')
+    .min(0, 'maxStock no puede ser negativo')
+    .optional(),
+
+  maxStock: z.coerce
+    .number('maxStock debe ser un número')
+    .int('maxStock debe ser un número entero')
+    .min(0, 'maxStock no puede ser negativo')
+    .optional()
 });
 
 export type ProductQueryType = z.infer<typeof productQuerySchema>;
+
+export const productParamsSchema = z.object({
+  idProduct: z.coerce.number().int().positive()
+});

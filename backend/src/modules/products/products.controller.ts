@@ -1,39 +1,67 @@
-import { createProductSchema, productQuerySchema } from './products.schema.js';
+import { createProductSchema, productQuerySchema, productParamsSchema, updateProductSchema } from './products.schema.js';
 import type { Request, Response } from 'express';
 import { productsService } from './products.service.js';
 
 export const createProductController = async (req: Request, res: Response) => {
   const dataProduct = createProductSchema.parse(req.body);
 
-  const newProducto = await productsService.createProduct(dataProduct);
+  const newProduct = await productsService.createProduct(dataProduct);
 
   return res.status(201).json({
     success: true,
     message: 'Producto creado correctamente',
-    data: newProducto
+    data: newProduct
   });
 };
 
 export const getAllProducts = async (req: Request, res: Response) => {
   const query = productQuerySchema.parse(req.query);
 
-  const response = await productsService.getAllProducts(query);
+  const { products, meta } = await productsService.getAllProducts(query);
 
   return res.status(200).json({
     success: true,
     message: 'Todos los productos obtenidos',
-    response
+    data: products,
+    meta
   });
 };
 
 export const getAllActiveProductsController = async (req: Request, res: Response) => {
   const query = productQuerySchema.parse(req.query);
 
-  const productsVisible = await productsService.getAllActiveProducts(query);
+  const { products, meta } = await productsService.getAllActiveProducts(query);
 
   return res.status(200).json({
     success: true,
     message: 'Productos activos obtenidos',
-    data: productsVisible
+    data: products,
+    meta
+  });
+};
+
+export const getProductByIdController = async (req: Request, res: Response) => {
+  const { idProduct } = productParamsSchema.parse(req.params);
+
+  const product = await productsService.getProductById(idProduct);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Producto obtenido correctamente',
+    data: product
+  });
+};
+
+export const updateProductController = async (req: Request, res: Response) => {
+  const { idProduct } = productParamsSchema.parse(req.params);
+
+  const dataProduct = updateProductSchema.parse(req.body);
+
+  const product = await productsService.updateProduct(idProduct, dataProduct);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Producto actualizado correctamente',
+    data: product
   });
 };

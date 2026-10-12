@@ -5,8 +5,8 @@ export const createProductSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(3, 'El nombre del producto deve tener minimo 3 caracteres')
-    .max(150, 'El nombre del producto no debe exceder los 100 caracteres'),
+    .min(3, 'El nombre del producto debe tener minimo 3 caracteres')
+    .max(150, 'El nombre del producto no debe exceder los 150 caracteres'),
 
   description: z
     .string()
@@ -24,7 +24,7 @@ export const createProductSchema = z.object({
   price: z
     .string()
     .trim()
-    .regex(/^\d{1,8}(\.\d{1,2})?$/),
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, 'El precio debe tener hasta 8 enteros y 2 decimales (ej: 99.90)'),
 
   stock: z.coerce.number('El stock debe ser un número').int('El stock debe ser entero').min(0).default(0),
 
@@ -64,14 +64,14 @@ export const productQuerySchema = z.object({
 
   isActive: z.stringbool('El query isActive debe tener un valor booleano').optional(),
 
-  minPrice: z.coerce.number('minPrice debe ser un número').min(0, 'minPrice no puede ser engativo').optional(),
+  minPrice: z.coerce.number('minPrice debe ser un número').min(0, 'minPrice no puede ser nengativo').optional(),
 
-  maxPrice: z.coerce.number('maxPrice debe ser un número').min(0, 'maxPrice no puede ser engativo').optional(),
+  maxPrice: z.coerce.number('maxPrice debe ser un número').min(0, 'maxPrice no puede ser nengativo').optional(),
 
   minStock: z.coerce
     .number('minStock debe ser un número')
     .int('minStock debe ser un número entero')
-    .min(0, 'maxStock no puede ser negativo')
+    .min(0, 'minStock no puede ser negativo')
     .optional(),
 
   maxStock: z.coerce

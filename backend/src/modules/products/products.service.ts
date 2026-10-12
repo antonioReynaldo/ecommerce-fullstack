@@ -170,10 +170,11 @@ export const productsService = {
     };
   },
 
-  async getProductById(idProduct: number) {
+  async getProductById(idProduct: number, onlyActive = false) {
     const product = await prisma.product.findUnique({
       where: {
-        id: idProduct
+        id: idProduct,
+        ...(onlyActive && { isActive: true })
       },
       select
     });

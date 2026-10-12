@@ -52,6 +52,18 @@ export const getProductByIdController = async (req: Request, res: Response) => {
   });
 };
 
+export const getActiveProductByIdController = async (req: Request, res: Response) => {
+  const { idProduct } = productParamsSchema.parse(req.params);
+
+  const product = await productsService.getProductById(idProduct, true);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Producto obtenido correctamente',
+    data: product
+  });
+};
+
 export const updateProductController = async (req: Request, res: Response) => {
   const { idProduct } = productParamsSchema.parse(req.params);
 

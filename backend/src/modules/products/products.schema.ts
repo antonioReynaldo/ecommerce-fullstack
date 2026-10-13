@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+export const productAttributeValueSchema = z.object({
+  categoryAttributeId: z.coerce
+    .number('El id del atributo debe ser un número')
+    .int('El id del atributo debe ser entero')
+    .positive('El id del atributo debe ser positivo'),
+
+  value: z
+    .string('El valor del atributo debe ser texto')
+    .trim()
+    .min(1, 'El valor del atributo no puede estar vacío')
+    .max(255, 'El valor del atributo no debe exceder los 255 caracteres')
+});
+
 export const createProductSchema = z.object({
   categoryId: z.coerce.number().int('El id de categoria debe ser entero').positive('El id de categoria debe ser positivo'),
   name: z
@@ -28,15 +41,21 @@ export const createProductSchema = z.object({
 
   stock: z.coerce.number('El stock debe ser un número').int('El stock debe ser entero').min(0).default(0),
 
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+
+  attributes: z.array(productAttributeValueSchema).default([])
 });
 
 export type CreateProductType = z.infer<typeof createProductSchema>;
 
 export const updateProductSchema = createProductSchema
-  .pick({ name: true, description: true, barcode: true, price: true, stock: true, isActive: true })
+  .pick({ name: true, description: true, barcode: true, price: true, stock: true, isActive: true, attributes: true })
   .partial()
-  .extend({ stock: z.coerce.number().int().min(0).optional(), isActive: z.boolean().optional() });
+  .extend({
+    stock: z.coerce.number().int().min(0).optional(),
+    isActive: z.boolean().optional(),
+    attributes: z.array(productAttributeValueSchema).optional()
+  });
 
 export type UpdateProductType = z.infer<typeof updateProductSchema>;
 

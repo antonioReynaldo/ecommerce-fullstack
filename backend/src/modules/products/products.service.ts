@@ -15,6 +15,19 @@ const select = {
   stock: true,
   isActive: true,
   createdAt: true,
+  attributeValues: {
+    select: {
+      value: true,
+      categoryAttribute: {
+        select: {
+          id: true,
+          name: true,
+          key: true,
+          type: true
+        }
+      }
+    }
+  },
   images: {
     select: {
       productId: true,
@@ -48,6 +61,8 @@ export const productsService = {
 
     const sku = generateSkuProduct(category.name);
 
+    console.log(dataProduct.attributes);
+
     const newProduct = await prisma.product.create({
       data: {
         categoryId: dataProduct.categoryId,
@@ -57,8 +72,15 @@ export const productsService = {
         sku,
         barcode: dataProduct.barcode ?? null,
         stock: dataProduct.stock,
-        isActive: dataProduct.isActive
-      }
+        isActive: dataProduct.isActive,
+        attributeValues: {
+          create: dataProduct.attributes.map((attribute) => ({
+            categoryAttributeId: attribute.categoryAttributeId,
+            value: attribute.value
+          }))
+        }
+      },
+      select
     });
 
     return newProduct;
@@ -185,7 +207,7 @@ export const productsService = {
   },
 
   async updateProduct(idProduct: number, dataProduct: UpdateProductType) {
-    const { name, description, barcode, stock, isActive, price } = dataProduct;
+    const { name, description, barcode, stock, isActive, price, attributes } = dataProduct;
 
     const product = await prisma.product.findUnique({
       where: {
@@ -212,7 +234,16 @@ export const productsService = {
       ...(barcode !== undefined && { barcode }),
       ...(stock !== undefined && { stock }),
       ...(isActive !== undefined && { isActive }),
-      ...(price !== undefined && { price })
+      ...(price !== undefined && { price }),
+      ...(attributes !== undefined && {
+        attributeValues: {
+          upsert: attributes.map((attribute) => ({
+            where: { productId_categoryAttributeId: { productId: product.id, categoryAttributeId: attribute.categoryAttributeId } },
+            create: { categoryAttributeId: attribute.categoryAttributeId, value: attribute.value },
+            update: { value: attribute.value }
+          }))
+        }
+      })
     };
 
     return await prisma.product.update({

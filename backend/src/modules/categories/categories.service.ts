@@ -247,7 +247,7 @@ export const categoriesService = {
     return prisma.category.update({
       where: { id: category.id },
       data: { isActive: status },
-      select: { isActive: true }
+      select: { id: true, name: true, isActive: true }
     });
   },
 

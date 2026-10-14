@@ -7,7 +7,9 @@ import {
   getAllProducts,
   getProductByIdController,
   getActiveProductByIdController,
-  updateProductController
+  updateProductController,
+  changeProductStatusController,
+  deleteProductController
 } from './products.controller.js';
 
 const router = Router();
@@ -18,6 +20,8 @@ router.get('/all', adminOnly, getAllProducts);
 router.get('/admin/:idProduct', adminOnly, getProductByIdController);
 router.post('/', adminOnly, createProductController);
 router.patch('/:idProduct', adminOnly, updateProductController);
+router.patch('/:idProduct/status', adminOnly, changeProductStatusController);
+router.delete('/:idProduct', adminOnly, deleteProductController);
 // Public
 router.get('/', getAllActiveProductsController);
 router.get('/:idProduct', getActiveProductByIdController);

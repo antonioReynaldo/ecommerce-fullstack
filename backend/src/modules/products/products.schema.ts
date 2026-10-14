@@ -105,3 +105,7 @@ export type ProductQueryType = z.infer<typeof productQuerySchema>;
 export const productParamsSchema = z.object({
   idProduct: z.coerce.number().int().positive()
 });
+
+export const changeProductStatusSchema = z.object({
+  status: z.boolean()
+});

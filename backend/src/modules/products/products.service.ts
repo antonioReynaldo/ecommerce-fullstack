@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { generateSkuProduct } from '../../utils/generateSkuProduct.js';
 import type { CreateProductType, ProductQueryType, UpdateProductType } from './products.schema.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { validateProductAttributes } from '../../utils/validateProductAttributes.js';
 
 const select = {
   id: true,
@@ -49,6 +50,14 @@ export const productsService = {
 
     if (!category) throw AppError.badRequest('Ese ID de categoria no existe');
 
+    const categoryAttributes = await prisma.categoryAttribute.findMany({
+      where: {
+        categoryId: category.id
+      }
+    });
+
+    validateProductAttributes(categoryAttributes, dataProduct.attributes, true);
+
     if (dataProduct.barcode !== undefined) {
       const product = await prisma.product.findUnique({
         where: {
@@ -60,8 +69,6 @@ export const productsService = {
     }
 
     const sku = generateSkuProduct(category.name);
-
-    console.log(dataProduct.attributes);
 
     const newProduct = await prisma.product.create({
       data: {
@@ -85,7 +92,7 @@ export const productsService = {
 
     return newProduct;
   },
-
+  // Obtener todos los productos (admin)
   async getAllProducts({ limit, page, search, categoryId, isActive, minPrice, maxPrice, minStock, maxStock }: ProductQueryType) {
     const skip = (page - 1) * limit;
 
@@ -148,7 +155,7 @@ export const productsService = {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   },
-
+  // Obtener todos los productos (public - solo activos)
   async getAllActiveProducts({ page, limit, search, categoryId, minPrice, maxPrice, minStock, maxStock }: ProductQueryType) {
     const skip = (page - 1) * limit;
 
@@ -191,7 +198,7 @@ export const productsService = {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   },
-
+  // Obtener un producto
   async getProductById(idProduct: number, onlyActive = false) {
     const product = await prisma.product.findUnique({
       where: {
@@ -205,7 +212,7 @@ export const productsService = {
 
     return product;
   },
-
+  // Actualziar producto
   async updateProduct(idProduct: number, dataProduct: UpdateProductType) {
     const { name, description, barcode, stock, isActive, price, attributes } = dataProduct;
 
@@ -216,6 +223,14 @@ export const productsService = {
     });
 
     if (!product) throw AppError.notFound('El Producto no existe');
+
+    if (attributes !== undefined) {
+      const categoryAttributes = await prisma.categoryAttribute.findMany({
+        where: { categoryId: product.categoryId }
+      });
+
+      validateProductAttributes(categoryAttributes, attributes, false);
+    }
 
     if (barcode !== undefined) {
       const barcodeInUse = await prisma.product.findFirst({
@@ -253,5 +268,50 @@ export const productsService = {
       data,
       select
     });
-  }
+  },
+  //
+  async changeProductStatus(idProduct: number, status: boolean) {
+    const product = await prisma.product.findUnique({
+      where: {
+        id: idProduct
+      }
+    });
+
+    if (!product) throw AppError.notFound('El producto no existe');
+
+    const statusProduct = await prisma.product.update({
+      where: { id: product.id },
+      data: { isActive: status },
+      select: { id: true, name: true, isActive: true }
+    });
+
+    return statusProduct;
+  },
+
+  async deleteProduct(idProduct: number) {
+    const product = await prisma.product.findUnique({
+      where: {
+        id: idProduct
+      }
+    });
+
+    if (!product) throw AppError.notFound('El producto no existe');
+
+    if (!product.isActive) throw AppError.conflict('El producto ya esta desactivado');
+
+    await prisma.product.update({
+      where: {
+        id: idProduct
+      },
+      data: {
+        isActive: false
+      }
+    });
+
+    return;
+  },
+
+  async deteProductAttribute() {},
+
+  async addImagesProducts() {}
 };

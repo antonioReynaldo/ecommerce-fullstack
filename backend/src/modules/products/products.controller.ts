@@ -1,4 +1,4 @@
-import { createProductSchema, productQuerySchema, productParamsSchema, updateProductSchema } from './products.schema.js';
+import { createProductSchema, productQuerySchema, productParamsSchema, updateProductSchema, changeProductStatusSchema } from './products.schema.js';
 import type { Request, Response } from 'express';
 import { productsService } from './products.service.js';
 
@@ -75,5 +75,30 @@ export const updateProductController = async (req: Request, res: Response) => {
     success: true,
     message: 'Producto actualizado correctamente',
     data: product
+  });
+};
+
+export const changeProductStatusController = async (req: Request, res: Response) => {
+  const { idProduct } = productParamsSchema.parse(req.params);
+
+  const { status } = changeProductStatusSchema.parse(req.body);
+
+  const newStatus = await productsService.changeProductStatus(idProduct, status);
+
+  return res.status(200).json({
+    success: true,
+    message: 'Estado actualizado correctamente',
+    data: newStatus
+  });
+};
+
+export const deleteProductController = async (req: Request, res: Response) => {
+  const { idProduct } = productParamsSchema.parse(req.params);
+
+  await productsService.deleteProduct(idProduct);
+
+  return res.status(200).json({
+    success: true,
+    message: 'El producto se elimino correctamente'
   });
 };
